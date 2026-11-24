@@ -1,7 +1,9 @@
 import streamlit as st
 import re
 import io
-
+import json
+import os
+from datetime import datetime
 from pypdf import PdfReader
 
 from xml.sax.saxutils import escape
@@ -302,6 +304,237 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+<style>
+
+/* Main page background */
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(
+        135deg,
+        #F0FDFA 0%,
+        #D9F7F4 45%,
+        #B9F0EC 100%
+    );
+}
+
+/* Main content area */
+[data-testid="stMain"] {
+    background: transparent;
+}
+
+/* Header */
+[data-testid="stHeader"] {
+    background: rgba(240, 253, 250, 0.75);
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: linear-gradient(
+        180deg,
+        #B9F0EC 0%,
+        #D9F7F4 100%
+    );
+}
+
+/* Main headings */
+h1, h2, h3 {
+    color: #164E63 !important;
+}
+
+/* Normal text */
+p, label, li {
+    color: #164E63;
+}
+
+
+/* Buttons - Ocean Teal */
+.stButton > button {
+    background-color: #087E8B !important;
+    color: #FFFFFF !important;
+    border: 1px solid #087E8B !important;
+    border-radius: 12px;
+    padding: 0.55rem 1.2rem;
+    font-weight: 600;
+}
+
+/* Force button text to remain white */
+.stButton > button p,
+.stButton > button span {
+    color: #FFFFFF !important;
+}
+
+/* Button hover - Bright Cyan */
+.stButton > button:hover {
+    background-color: #2DD4D8 !important;
+    color: #073B4C !important;
+    border: 1px solid #2DD4D8 !important;
+}
+
+/* Hover text */
+.stButton > button:hover p,
+.stButton > button:hover span {
+    color: #073B4C !important;
+}
+
+
+/* Button hover */
+.stButton > button:hover {
+    background-color: #2DD4D8;
+    color: #073B4C;
+    border: 1px solid #2DD4D8;
+    transform: translateY(-2px);
+}
+
+/* Text input and text area */
+.stTextInput input,
+.stTextArea textarea {
+    background-color: #FFFFFF;
+    border: 1px solid #B9F0EC;
+    border-radius: 10px;
+}
+
+/* Select boxes */
+.stSelectbox div[data-baseweb="select"] {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+}
+
+/* Download button */
+.stDownloadButton > button {
+    background-color: #164E63;
+    color: white;
+    border-radius: 12px;
+}
+
+/* Success messages */
+[data-testid="stAlert"] {
+    border-radius: 12px;
+}
+
+/* Floating white cards */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: rgba(255, 255, 255, 0.94);
+    border: 1px solid #D5EAE8;
+    border-radius: 18px;
+    box-shadow: 0 5px 18px rgba(8, 126, 139, 0.10);
+    padding: 12px;
+}
+
+/* ----------------------------------
+   OCEAN BREEZE ANIMATIONS
+---------------------------------- */
+
+/* Gentle page fade-in */
+@keyframes oceanFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+[data-testid="stMain"] {
+    animation: oceanFadeIn 0.7s ease-out;
+}
+
+/* Floating card hover effect */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 24px rgba(8, 126, 139, 0.16);
+}
+
+/* Smooth button animation */
+.stButton > button {
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        transform 0.2s ease,
+        box-shadow 0.25s ease;
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 14px rgba(8, 126, 139, 0.20);
+}
+
+/* Soft title glow */
+h1 {
+    text-shadow: 0 2px 12px rgba(45, 212, 216, 0.18);
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    [data-testid="stMain"],
+    [data-testid="stVerticalBlockBorderWrapper"],
+    .stButton > button {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* ----------------------------------
+   STAGE 4 - COMPLIANCE REPORT
+---------------------------------- */
+
+/* Keep the main report area light */
+[data-testid="stMain"] {
+    background: #F0FDFA !important;
+}
+
+/* Make headings readable */
+[data-testid="stMain"] h1,
+[data-testid="stMain"] h2,
+[data-testid="stMain"] h3 {
+    color: #164E63 !important;
+}
+
+/* Report text */
+[data-testid="stMain"] p,
+[data-testid="stMain"] label,
+[data-testid="stMain"] li {
+    color: #164E63 !important;
+}
+
+/* Report cards and bordered sections */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: #FFFFFF !important;
+    border: 1px solid #B9F0EC !important;
+    border-radius: 18px !important;
+    box-shadow: 0 5px 18px rgba(8, 126, 139, 0.10);
+}
+
+/* Human Review and Approval section */
+[data-testid="stMain"] [data-testid="stAlert"] {
+    background: #E7F8F6 !important;
+    border-radius: 12px;
+}
+
+/* Stage 4 buttons */
+[data-testid="stMain"] .stButton > button {
+    background: #087E8B !important;
+    color: #FFFFFF !important;
+}
+
+/* Keep button text white */
+[data-testid="stMain"] .stButton > button p {
+    color: #FFFFFF !important;
+}
+
+
+</style>
+""", unsafe_allow_html=True)
+
+
 # ----------------------------------
 # MAIN WEBSITE HEADING
 # ----------------------------------
@@ -519,49 +752,134 @@ if "draft" in st.session_state:
 # FUNCTION 2B: FIND GUIDELINE EVIDENCE
 # ----------------------------------
 
+
 def find_guideline_evidence(profile, claim):
 
     claim_lower = claim.lower()
 
+    # Identify the type of claim and related guideline terms
     if "₹" in claim or "rs." in claim_lower or "inr" in claim_lower:
-        keywords = ["price", "pricing", "discount", "offer", "amount"]
+        category = "Price"
+        search_terms = {
+            "price", "prices", "pricing", "cost", "amount",
+            "discount", "offer", "fee", "charge", "approved",
+            "approval", "verify", "verified"
+        }
 
     elif "%" in claim:
-        keywords = ["percentage", "performance", "improvement", "results", "claims"]
+        category = "Percentage or performance"
+        search_terms = {
+            "percentage", "percent", "performance", "improvement",
+            "results", "claims", "claim", "guarantee",
+            "guarantees", "satisfaction", "approved", "approval",
+            "verified", "verify"
+        }
 
     elif re.search(r"customers|users|clients", claim_lower):
-        keywords = ["customers", "users", "clients", "statistics", "numbers"]
+        category = "Customer statistics"
+        search_terms = {
+            "customer", "customers", "user", "users",
+            "client", "clients", "statistics", "statistic",
+            "numbers", "number", "count", "approved",
+            "approval", "verify", "verified"
+        }
 
     elif re.search(r"hours|days|years", claim_lower):
-        keywords = ["hours", "days", "years", "delivery", "time", "deadline"]
+        category = "Time-related claim"
+        search_terms = {
+            "time", "hours", "days", "years", "timeline",
+            "support", "response", "delivery", "deadline",
+            "service", "accurate", "approved", "approval",
+            "verify", "verified"
+        }
 
-    elif re.search(r"certified|award-winning", claim_lower):
-        keywords = ["certified", "certification", "award", "recognition"]
+    elif re.search(r"certified|certification|award", claim_lower):
+        category = "Certification or award"
+        search_terms = {
+            "certified", "certification", "certificate",
+            "certificates", "award", "awards", "recognition",
+            "qualified", "official", "valid", "document",
+            "documents", "approved", "approval", "verify",
+            "verified"
+        }
 
     else:
-        keywords = []
+        category = "General claim"
 
+        claim_words = set(
+            re.findall(r"\b[a-zA-Z]+\b", claim_lower)
+        )
+
+        stop_words = {
+            "the", "a", "an", "is", "are", "was", "were",
+            "our", "we", "you", "your", "and", "or", "to",
+            "of", "in", "on", "for", "with", "this", "that",
+            "has", "have", "had", "it", "its", "by", "from"
+        }
+
+        search_terms = claim_words - stop_words
+
+    # Collect guideline sources
     sources = [
-        ("Approved Facts and Rules", profile["rules"]),
-        ("Uploaded PDF Guidelines", profile["pdf_guidelines"])
+        (
+            "Approved Facts and Rules",
+            profile.get("rules", "")
+        ),
+        (
+            "Uploaded PDF Guidelines",
+            profile.get("pdf_guidelines", "")
+        )
     ]
 
+    best_match = None
+    best_score = 0
+    best_terms = []
+
+    # Compare each guideline line with the claim category
     for source_name, source_text in sources:
+
+        if not isinstance(source_text, str):
+            continue
 
         for line in source_text.splitlines():
 
             line = line.strip()
 
-            if line and any(
-                keyword in line.lower()
-                for keyword in keywords
-            ):
+            if not line:
+                continue
 
-                return source_name, line
+            guideline_words = set(
+                re.findall(r"\b[a-zA-Z]+\b", line.lower())
+            )
+
+            matched_terms = search_terms & guideline_words
+            score = len(matched_terms)
+
+            if score > best_score:
+                best_score = score
+                best_match = (source_name, line)
+                best_terms = sorted(matched_terms)
+
+    # Return the strongest relevant guideline
+    if best_match and best_score >= 1:
+
+        source_name, guideline = best_match
+
+        explanation = (
+            f"Claim category: {category}\n"
+            "Matching terms: "
+            + ", ".join(best_terms)
+            + "\nPlease confirm that this guideline applies "
+              "to the claim. Human review is recommended."
+        )
+
+        return source_name, guideline + "\n\n" + explanation
 
     return (
-        "No matching guideline found",
-        "No explicit supporting guideline was found. Human review is required."
+        "No sufficiently relevant guideline found",
+        f"Claim category: {category}\n"
+        "No relevant guideline passage was found. "
+        "Human review is required."
     )
 
 
@@ -643,20 +961,30 @@ if st.button("Check Brand Compliance"):
                 violations.append(word)
 
 
+       
         # ----------------------------------
         # CHECK APPROVED TERMINOLOGY
         # ----------------------------------
 
-        approved = profile["approved_words"].splitlines()
+        approved = profile.get("approved_words", "").splitlines()
 
         missing_words = []
+
+        content_lower = content.lower()
 
         for word in approved:
 
             word = word.strip()
 
-            if word and word.lower() not in content.lower():
+            if not word:
+                continue
 
+            # Normalize hyphens to spaces for comparison
+            normalized_word = re.sub(r"[-_]", " ", word.lower())
+            normalized_content = re.sub(r"[-_]", " ", content_lower)
+
+            # Check whether the approved term appears
+            if normalized_word not in normalized_content:
                 missing_words.append(word)
 
 
@@ -895,9 +1223,212 @@ if st.button("Check Brand Compliance"):
             claim_evidence
         )
 
+        # ----------------------------------
+        # SAVE COMPLIANCE RESULTS FOR REVIEW
+        # ----------------------------------
+
+        st.session_state["compliance_results"] = {
+            "profile": profile,
+            "draft": draft,
+            "violations": violations,
+            "missing_words": missing_words,
+            "tone_issues": tone_issues,
+            "unsupported_claims": unsupported_claims,
+            "claim_evidence": claim_evidence,
+            "suggestions": suggestions,
+            "rule_results": rule_results,
+            "pdf_results": pdf_results,
+            "pdf_report": pdf_report
+        }
+
+ 
         st.download_button(
             label="📥 Download Compliance Report",
             data=pdf_report,
             file_name="Brand_Compliance_Report.pdf",
             mime="application/pdf"
         )
+
+# ==================================
+# ROUND 3: HUMAN REVIEW WORKFLOW
+# ==================================
+
+if "compliance_results" in st.session_state:
+
+    st.divider()
+
+    st.header("👩‍💼 Human Review and Approval")
+
+    results = st.session_state["compliance_results"]
+
+    st.info(
+        "A reviewer should examine the compliance findings "
+        "before making the final decision."
+    )
+
+    st.subheader("📋 Review Summary")
+
+    st.write(
+        "Draft submitted:",
+        results["draft"]["content"][:300]
+    )
+
+    st.write(
+        "Possible unsupported claims:",
+        len(results["unsupported_claims"])
+    )
+
+    st.write(
+        "Avoided words detected:",
+        len(results["violations"])
+    )
+
+    st.write(
+        "Missing approved words:",
+        len(results["missing_words"])
+    )
+
+    st.divider()
+
+    reviewer_name = st.text_input(
+        "Reviewer Name",
+        key="reviewer_name"
+    )
+
+    review_decision = st.radio(
+        "Review Decision",
+        ["Approved", "Requires Changes"],
+        key="review_decision"
+    )
+
+    reviewer_comments = st.text_area(
+        "Reviewer Comments",
+        key="reviewer_comments"
+    )
+    
+    if st.button("Submit Review"):
+
+        if not reviewer_name.strip():
+
+            st.error("Please enter the reviewer name.")
+
+        elif not reviewer_comments.strip():
+
+            st.error("Please enter review comments.")
+
+        else:
+
+            review_record = {
+                "reviewer": reviewer_name.strip(),
+                "decision": review_decision,
+                "comments": reviewer_comments.strip(),
+                "draft": results["draft"]["content"],
+                "reviewed_at": datetime.now().astimezone().isoformat(
+                    timespec="seconds"
+                )
+            }
+
+            st.session_state["review_record"] = review_record
+
+            history_file = os.path.join(
+                os.path.dirname(__file__),
+                "review_history.json"
+            )
+
+            if os.path.exists(history_file):
+
+                with open(history_file, "r", encoding="utf-8") as file:
+                    review_history = json.load(file)
+
+            else:
+
+                review_history = []
+
+            review_history.append(review_record)
+
+            with open(history_file, "w", encoding="utf-8") as file:
+                json.dump(
+                    review_history,
+                    file,
+                    indent=4,
+                    ensure_ascii=False
+                )
+
+            st.success("Review submitted and saved to history!")
+
+
+    
+
+       
+
+           
+    if "review_record" in st.session_state:
+
+        review = st.session_state["review_record"]
+
+        st.subheader("📌 Final Review Status")
+
+        st.write("Reviewer:", review["reviewer"])
+
+        st.write("Decision:", review["decision"])
+
+        st.write("Comments:", review["comments"])
+
+        if review["decision"] == "Approved":
+
+            st.success("Draft approved by the reviewer.")
+
+        else:
+
+            st.warning("Draft requires changes.")
+
+# ==================================
+# REVIEW HISTORY AND AUDIT TRAIL
+# ==================================
+
+st.divider()
+
+st.subheader("📚 Review History")
+
+history_file = "review_history.json"
+
+if os.path.exists(history_file):
+
+    with open(history_file, "r", encoding="utf-8") as file:
+        review_history = json.load(file)
+
+    if review_history:
+
+        for index, record in enumerate(
+            reversed(review_history),
+            start=1
+        ):
+
+            with st.expander(
+                f"Review {index} - {record['decision']}"
+            ):
+
+                st.write("Reviewer:", record["reviewer"])
+
+                st.write("Date and Time:", record["reviewed_at"])
+
+                st.write("Decision:", record["decision"])
+
+                st.write("Comments:", record["comments"])
+
+                st.text_area(
+                    "Reviewed Draft",
+                    value=record["draft"],
+                    height=150,
+                    disabled=True,
+                    key=f"history_draft_{index}"
+                )
+
+    else:
+
+        st.info("No review history available yet.")
+
+else:
+
+    st.info("No review history available yet.")
+
